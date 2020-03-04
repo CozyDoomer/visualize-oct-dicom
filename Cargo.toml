@@ -1,0 +1,25 @@
+[package]
+name = "pdf_generator"
+version = "0.1.0"
+authors = ["CozyDoomer <chr.unterrainer@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+
+#dicom-object = { git = "https://github.com/cozyDoomer/dicom-rs"}
+#dicom-core = { git = "https://github.com/cozyDoomer/dicom-rs"}
+#dicom-dictionary-std = { git = "https://github.com/cozyDoomer/dicom-rs"}
+#dicom-encoding = { git = "https://github.com/cozyDoomer/dicom-rs"}
+
+dicom-object = { git = "https://github.com/Enet4/dicom-rs "}
+dicom-core = { git = "https://github.com/Enet4/dicom-rs "}
+dicom-dictionary-std = { git = "https://github.com/Enet4/dicom-rs "}
+dicom-encoding = { git = "https://github.com/Enet4/dicom-rs "}
+
+ndarray = "0.13.0"
+smallvec = "1.0.0"
+image = "0.23.0"
+quicli = "0.4.0"
+structopt = "0.3.9"
