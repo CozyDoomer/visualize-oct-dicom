@@ -17,8 +17,8 @@ fn main() -> CliResult {
     let args = Cli::from_args();
 
     let oct = loader::load_oct(args.volume_path).expect("could not read dicom oct volume");
-    
-    utils::ndarray_to_images(oct.0);
+    //println!("{:?}", oct.0);
+    utils::volume_to_images(oct.0);
 
     Ok(())
 }
