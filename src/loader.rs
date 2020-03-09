@@ -62,8 +62,8 @@ pub fn load_oct(path: String) -> Result<OctVolume, Box<dyn std::error::Error>> {
     }.expect("could not read pixel data");
 
     let slices: u16 = dicom_element_i32(oct.element_by_name("NumberOfFrames")?) as u16;
-    let width = dicom_element_u16(oct.element_by_name("Rows")?);
-    let height = dicom_element_u16(oct.element_by_name("Columns")?);
+    let width = dicom_element_u16(oct.element_by_name("Columns")?);
+    let height = dicom_element_u16(oct.element_by_name("Rows")?);
     let shape = vec![slices as usize, width as usize, height as usize];
 
     let min_pos = [2.161817789077759, 1.304476261138916];
