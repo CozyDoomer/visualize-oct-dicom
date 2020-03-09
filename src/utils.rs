@@ -1,10 +1,8 @@
 use ndarray::{ArrayBase, OwnedRepr, Dim, IxDynImpl};
 use image::{DynamicImage, GrayImage};
-use printpdf::{PdfDocument, Image, Mm, Px};
+use printpdf::{PdfDocument, PdfDocumentReference, Image, Mm, Px};
+use printpdf::indices::{PdfPageIndex, PdfLayerIndex};
 //use plotters::prelude::*;
-
-use std::fs::File;
-use std::io::BufWriter;
 use rusttype::Point;
 
 pub const DPI: f64 = 110.0;
@@ -67,28 +65,52 @@ pub fn calculate_image_positions(shape: &Vec<u16>) -> (Point<f64>, Point<f64>) {
 }
 
 
-pub fn save_bscan_as_pdf(bscan: Vec<u8>, shape: &Vec<u16>, slice_ind: usize) -> Result<(), Box<dyn std::error::Error>> {
-
-    let (doc, page1, layer1) = PdfDocument::new(
-        "pdf-generation-rust", 
+pub fn get_pdf_document() -> (PdfDocumentReference, PdfPageIndex, PdfLayerIndex) {
+    PdfDocument::new(
+        "oct mask comparison", 
         Mm(PAGE_WIDTH_PIXELS / MM_PIXEL_CONV), 
-        Mm(PAGE_HEIGHT_PIXELS / MM_PIXEL_CONV), "Page1"
-    );
+        Mm(PAGE_HEIGHT_PIXELS / MM_PIXEL_CONV), 
+        "en-face projection"
+    )
+}
 
-    let current_layer = doc.get_page(page1).get_layer(layer1);
+pub fn save_bscan_as_pdf(bscan: Vec<u8>, 
+                         shape: &Vec<u16>, 
+                         pdf_document: &(PdfDocumentReference,PdfPageIndex, PdfLayerIndex), 
+                         slice_ind: usize) -> Result<(), Box<dyn std::error::Error>> 
+{
+    let (doc, page, layer) = pdf_document;
+    let (page, layer) = doc.add_page(Mm(PAGE_WIDTH_PIXELS / MM_PIXEL_CONV), 
+                                     Mm(PAGE_HEIGHT_PIXELS / MM_PIXEL_CONV), 
+                                     format!("Scan: {0}", slice_ind));
 
-    let image: DynamicImage = DynamicImage::ImageLuma8(GrayImage::from_raw(shape[1] as u32, shape[2] as u32, bscan).unwrap());
+    let current_layer = doc.get_page(page).get_layer(layer);
+
+    let image = DynamicImage::ImageLuma8(GrayImage::from_raw(shape[1] as u32, shape[2] as u32, bscan).unwrap());
     let pdf_image = Image::from_dynamic_image(&image);
     let pdf_image_TODO = Image::from_dynamic_image(&image);
 
     let (pos1, pos2) = calculate_image_positions(&shape);
-    println!("{:?}, {:?}", pos1, pos2);
-    pdf_image.add_to_layer(current_layer.clone(), Some(Mm(pos1.x / MM_PIXEL_CONV)), Some(Mm(pos1.y / MM_PIXEL_CONV)), None, None, None, Some(DPI));
-    pdf_image_TODO.add_to_layer(current_layer.clone(), Some(Mm(pos2.x / MM_PIXEL_CONV)), Some(Mm(pos2.y / MM_PIXEL_CONV)), None, None, None, Some(DPI));
+    //println!("{:?}, {:?}", pos1, pos2);
+
+    pdf_image.add_to_layer(current_layer.clone(), 
+                           Some(Mm(pos1.x / MM_PIXEL_CONV)), 
+                           Some(Mm(pos1.y / MM_PIXEL_CONV)), 
+                           None, 
+                           None, 
+                           None, 
+                           Some(DPI));
+
+    pdf_image_TODO.add_to_layer(current_layer.clone(), 
+                                Some(Mm(pos2.x / MM_PIXEL_CONV)), 
+                                Some(Mm(pos2.y / MM_PIXEL_CONV)), 
+                                None, 
+                                None, 
+                                None, 
+                                Some(DPI));
+
     //pdf_image.add_to_layer(current_layer.clone(), Some(Mm(408.0)), Some(Mm(272.0)), None, None, None, Some(DPI));
     //pdf_image_TODO.add_to_layer(current_layer.clone(), Some(Mm(1000.0)), Some(Mm(272.0)), None, None, None, Some(DPI));
-
-    doc.save(&mut BufWriter::new(File::create(format!("results/oct_{0}.pdf", slice_ind)).unwrap())).unwrap();
 
     Ok(())
 }
