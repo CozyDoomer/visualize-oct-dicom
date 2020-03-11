@@ -4,14 +4,16 @@ use dicom_core::{PrimitiveValue};
 use dicom_core::header::{DataElement};
 use dicom_core::value::{Value as DicomValue};
 use dicom_dictionary_std::StandardDataDictionary;
-
 use ndarray::{ArrayBase, Array, OwnedRepr, Dim, IxDynImpl};
+use std::path::Path;
 
-pub struct OctVolume {
-    pub pixel_volume: ArrayBase<OwnedRepr<u8>, Dim<IxDynImpl>>,
-    pub shape: Vec<u16>,
+#[derive(Debug)]
+pub struct OctData {
+    pub oct_volume: ArrayBase<OwnedRepr<u8>, Dim<IxDynImpl>>,
     pub vendor: String,
     pub reference_pos: Vec<f64>,
+    pub fundus_image: Vec<u8>,
+    pub fundus_shape: Vec<usize>
 }
 
 fn dicom_element_i32(dicom_element: &DataElement<InMemDicomObject<StandardDataDictionary>>) -> i32 {
@@ -40,8 +42,11 @@ fn dicom_element_slice_u8(dicom_element: &DataElement<InMemDicomObject<StandardD
     }
 }
 
-pub fn load_oct(path: String) -> Result<OctVolume, Box<dyn std::error::Error>> {
-    let oct = open_file(path)?;
+pub fn load_oct(path: String) -> Result<OctData, Box<dyn std::error::Error>> {
+    let oct_path = format!("{}/{}", path.to_string(), "/bscan.dcm");
+    let fundus_path = format!("{}/{}", path.to_string(), "/fundus.dcm");
+    
+    let oct = open_file(Path::new(&oct_path))?;
 
     let manufacturer = oct.element_by_name("Manufacturer")?.to_str()?.to_lowercase();
 
@@ -51,7 +56,7 @@ pub fn load_oct(path: String) -> Result<OctVolume, Box<dyn std::error::Error>> {
         x => x,
     };
 
-    let pixel_data = match vendor {
+    let oct_pixels = match vendor {
         "spectralis" => {
             let slice_u16 = dicom_element_slice_u16(oct.element(Tag(0x7fe0, 0x0010))?)?;
             // convert &[u16] to Vec<u8>
@@ -64,19 +69,31 @@ pub fn load_oct(path: String) -> Result<OctVolume, Box<dyn std::error::Error>> {
     let slices: u16 = dicom_element_i32(oct.element_by_name("NumberOfFrames")?) as u16;
     let width = dicom_element_u16(oct.element_by_name("Columns")?);
     let height = dicom_element_u16(oct.element_by_name("Rows")?);
-    let shape = vec![slices as usize, width as usize, height as usize];
+    let oct_shape = vec![slices as usize, width as usize, height as usize];
+    
+    let oct_array = Array::from_shape_vec(oct_shape, oct_pixels).expect(&format!("invalid shape: {}", oct_path));
+    
+    let fundus = open_file(Path::new(&fundus_path))?;
+    let fundus_pixels = dicom_element_slice_u8(fundus.element(Tag(0x7fe0, 0x0010))?)?.to_vec();
+
+    //let slices: u16 = dicom_element_i32(oct.element_by_name("NumberOfFrames")?) as u16;
+    let width = dicom_element_u16(fundus.element_by_name("Columns")?);
+    let height = dicom_element_u16(fundus.element_by_name("Rows")?);
+    let fundus_shape = vec![width as usize, height as usize];
 
     let min_pos = [2.161817789077759, 1.304476261138916];
     let slice_spacing = dicom_element_f64(oct.element_by_name("PixelSpacing")?);
     let x_max = min_pos[0] + (height as f64 * slice_spacing);
-
+    let ref_pos = vec![min_pos[0], min_pos[1], x_max, min_pos[1] + slices as f64 * slice_spacing];
+    
     Ok(
-        OctVolume
+        OctData
         {
-            pixel_volume: Array::from_shape_vec(shape, pixel_data).expect("invalid shape"),
-            shape: vec![slices, width, height],
+            oct_volume: oct_array,
             vendor: String::from(vendor), 
-            reference_pos: vec![min_pos[0], min_pos[1], x_max, min_pos[1] + slices as f64 * slice_spacing]
+            reference_pos: ref_pos,
+            fundus_image: fundus_pixels,
+            fundus_shape: fundus_shape,
         }
     )
 }
