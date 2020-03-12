@@ -9,54 +9,46 @@ use std::fs::File;
 use std::io::BufWriter;
 use quicli::prelude::*;
 use structopt::StructOpt;
-
-use std::time::Instant;
 use std::convert::TryInto;
+use std::time::Instant;
 
 #[derive(StructOpt)]
+#[structopt(name = "pdf-generation", about = "Uses oct volumes (.dcm) and corresponding mask files to generate pdf.")]
 struct Cli {
+    #[structopt(short = "v", long = "volume_path", 
+                help = "path to the input dataset where subfolders are scan-ids containing A-Scans")]
     volume_path: String,
-}
-
-fn fix_to_usize2(shape: &[usize]) -> &[usize; 2] {
-    shape.try_into().expect("slice with incorrect length")
+    #[structopt(short = "s", long = "max_image_size", 
+                help = "max size of the larger image dimension. smaller dimension will be resized proportionally")]
+    max_size: usize,
 }
 
 fn main() -> CliResult {
-    let now = Instant::now();
+    let _now = Instant::now();
     let args = Cli::from_args();
 
     let oct_data = loader::load_oct(args.volume_path).expect("could not read dicom oct volume");
 
-    let oct_shape = fix_to_usize2(&oct_data.oct_volume.shape().split_first().unwrap().1);
-    let fundus_shape = fix_to_usize2(&oct_data.fundus_shape);
-    //println!("{:?}", oct_data.oct_volume);
     let (doc, page, layer) = utils::get_pdf_document();
-    //utils::save_oct_volume_as_jpgs(&oct_data.oct_volume, &oct.shape);
 
-    utils::add_2d_image_to_pdf(oct_data.fundus_image,
-                               fundus_shape,
-                               (&doc,
-                               page,
-                               layer),
-                               0).expect("could not save images as pdf");
 
-    for (i, bscan) in oct_data.oct_volume.outer_iter().enumerate() {
+    utils::add_2d_image_to_pdf(oct_data.fundus_image, &oct_data.fundus_shape, None, None, (&doc, page, layer), 0)
+        .expect("could not save images as pdf");
+    
+    let (requested_size, filtertype) = utils::calculate_size_from_1side(&oct_data.oct_shape[1..], 256);
 
-        let bscan_vec: Vec<u8> = bscan.to_slice().unwrap().to_vec();
+    let bscan_pixel_len = oct_data.oct_shape[1..].iter().product();
+    utils::save_oct_volume_as_jpgs(&oct_data.oct_volume, &oct_data.oct_shape[1..]);
 
-        //utils::draw_plot(bscan_vec, &oct_data.oct_volume.shape, i).expect("could not plot oct volume to image");
-
+    for (i, bscan) in oct_data.oct_volume.chunks_exact(bscan_pixel_len).enumerate() {
         let (page, layer) = utils::add_pdf_page(&doc, i);
 
-        utils::add_2d_image_to_pdf(bscan_vec, 
-                                   oct_shape,
-                                   (&doc,
-                                   page,
-                                   layer),
-                                   i).expect("could not save images as pdf");
+        utils::add_2d_image_to_pdf(bscan.to_vec(), &oct_data.oct_shape[1..], Some(&requested_size), Some(filtertype), (&doc, page, layer), i)
+            .expect("could not save images as pdf");
     }
 
     doc.save(&mut BufWriter::new(File::create(format!("results/oct_{0}.pdf", "scanID")).unwrap())).unwrap();
+
+    println!("{}", _now.elapsed().as_nanos());
     Ok(())
 }

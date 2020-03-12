@@ -1,7 +1,7 @@
 ## TODO
 
-- [ ] figure out how to do plotting (position, draw over image etc)
+- [ ] use fixed arrays where possible
 
-- [ ] don't save plotted image to disk -> return it directly
+- [ ] testing
 
-- [ ] figure out how to save as pdf
+- [ ] benchmarking

@@ -15,8 +15,8 @@ dicom-encoding = { git = "https://github.com/cozyDoomer/dicom-rs", branch = "fea
 
 printpdf = { git = "https://github.com/fschutt/printpdf.git" }
 
-ndarray = "0.13.0"
 image = "0.23.0"
 quicli = "0.4.0"
 structopt = "0.3.9"
 rusttype = "0.8.2"
+rand = "0.7.3"
