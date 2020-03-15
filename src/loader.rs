@@ -42,7 +42,7 @@ fn dicom_element_slice_u8(dicom_element: &DataElement<InMemDicomObject<StandardD
     }
 }
 
-pub fn load_oct(path: String) -> Result<OctData, Box<dyn std::error::Error>> {
+pub fn load_oct(path: &str) -> Result<OctData, Box<dyn std::error::Error>> {
     let oct_path = format!("{}/{}", path.to_string(), "/bscan.dcm");
     let fundus_path = format!("{}/{}", path.to_string(), "/fundus.dcm");
     

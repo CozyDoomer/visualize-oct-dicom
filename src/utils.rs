@@ -3,7 +3,8 @@ use image::imageops::{FilterType};
 use printpdf::{PdfDocument, PdfDocumentReference, Image, Mm};
 use printpdf::indices::{PdfPageIndex, PdfLayerIndex};
 use rusttype::Point;
-use rusttype::Scale;
+use glob::glob;
+use std::path::{PathBuf};
 
 const DPI: f64 = 110.0;
 const PAGE_WIDTH_PIXELS: f64 = 1920.0;
@@ -76,6 +77,7 @@ pub fn add_pdf_page(pdf_doc: &PdfDocumentReference, slice_ind: usize) -> (PdfPag
 
 pub fn calculate_size_from_1side(size: &[usize], max_image_size: usize) -> ([usize; 2], FilterType) {
     let result;
+    // FilterType::CatmullRom is a standard cubic filter
     let filtertype = if size[1] > max_image_size { FilterType::Nearest } else { FilterType::CatmullRom };
 
     if size[0] < size[1] {
@@ -105,7 +107,7 @@ pub fn add_2d_image_to_pdf(bscan: Vec<u8>,
         Some(size) => image.resize_exact(size[0] as u32, 
                                          size[1] as u32, 
                                          filtertype.unwrap_or(FilterType::Nearest)),
-        None    => image,
+        None       => image,
     };
 
     let pdf_image = Image::from_dynamic_image(&image);
@@ -130,3 +132,18 @@ pub fn add_2d_image_to_pdf(bscan: Vec<u8>,
                                 Some(DPI));
     Ok(())
 }
+
+pub fn glob_filenames(segmentation_paths: &Vec<PathBuf>, dirname: &String) {
+    let exts = ["**/*.mhd", "**/*.raw", "**/*.csv"];
+    for ext in &exts {
+        for segmentation_path in segmentation_paths {
+            for entry in glob(format!("{}/{}/{}", segmentation_path.to_str().unwrap(), dirname, ext).as_str()).expect("Failed to read glob pattern") {
+                match entry {
+                    Ok(path) => println!("{:?}", path.display()),
+                    Err(e) => println!("{:?}", e),
+                }
+            }
+        }
+    }
+}
+    
