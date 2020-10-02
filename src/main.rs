@@ -2,15 +2,14 @@
 generates pdfs from subfolders of oct volumes and corresponding probability mask
 */
 
-mod loader;
-mod utils;
+use visualize_oct_dicom::loader;
+use visualize_oct_dicom::utils;
 
 use std::fs::File;
 use quicli::prelude::*;
 use structopt::StructOpt;
 use scan_dir::ScanDir;
 use std::io::BufWriter;
-use std::convert::TryInto;
 use std::time::Instant;
 use std::path::{PathBuf};
 

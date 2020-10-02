@@ -20,8 +20,8 @@
 // 6.346898043 6.312235771 6.742419365 cirrus
 // 1.744876646 1.981386831 1.933800719 spectralis
 
-mod utils;
-mod loader;
+pub mod utils;
+pub mod loader;
 
 #[cfg(test)]
 mod test_utils {
@@ -31,9 +31,9 @@ mod test_utils {
 
     #[test]
     fn test_calculate_image_positions() {
-        assert_eq!((Point{x: 408.0, y: 272.0}, Point{x: 1000.0, y: 272.0}), utils::calculate_image_positions([512, 496]));
-        assert_eq!((Point{x: 408.0, y:   8.0}, Point{x: 1000.0, y:   8.0}), utils::calculate_image_positions([512, 1024]));
-        assert_eq!((Point{x: 720.0, y:   8.0}, Point{x: 1000.0, y:   8.0}), utils::calculate_image_positions([200, 1024]));
+        assert_eq!((Point{x: 408.0, y: 272.0}, Point{x: 1000.0, y: 272.0}), utils::calculate_image_positions(&[512, 496]));
+        assert_eq!((Point{x: 408.0, y:   8.0}, Point{x: 1000.0, y:   8.0}), utils::calculate_image_positions(&[512, 1024]));
+        assert_eq!((Point{x: 720.0, y:   8.0}, Point{x: 1000.0, y:   8.0}), utils::calculate_image_positions(&[200, 1024]));
     }
 
     //#[bench]
