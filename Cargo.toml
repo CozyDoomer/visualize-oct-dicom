@@ -6,6 +6,15 @@ edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[lib]
+name = "visualize_oct_dicom"
+path = "src/lib.rs"
+
+[[bin]]
+name = "pdf_generator"
+path = "src/main.rs"
+doc = false
+
 [dependencies]
 
 dicom = "0.3"
