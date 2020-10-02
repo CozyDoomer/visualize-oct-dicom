@@ -8,10 +8,7 @@ edition = "2018"
 
 [dependencies]
 
-dicom-object = { git = "https://github.com/cozyDoomer/dicom-rs", branch = "feature/parse-invalid-datetime"}
-dicom-core = { git = "https://github.com/cozyDoomer/dicom-rs", branch = "feature/parse-invalid-datetime"}
-dicom-dictionary-std = { git = "https://github.com/cozyDoomer/dicom-rs", branch = "feature/parse-invalid-datetime"}
-dicom-encoding = { git = "https://github.com/cozyDoomer/dicom-rs", branch = "feature/parse-invalid-datetime"}
+dicom = "0.3"
 
 printpdf = { git = "https://github.com/fschutt/printpdf.git" }
 
